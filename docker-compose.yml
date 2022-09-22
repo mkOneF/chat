@@ -1,0 +1,76 @@
+version: '3.9'
+
+x-base:
+  &base
+  networks:
+    - chat-network
+
+x-after-chat:
+  &after-chat
+  <<: *base
+  depends_on:
+    - chat
+
+x-backend:
+  &backend
+  <<: *base
+  working_dir: /var/www/chat
+
+x-worker:
+  &worker
+  <<: *backend
+  image: xphp-worker:latest
+  volumes:
+    - ./docker/worker/default.conf:/etc/supervisor/conf.d/default.conf
+    - ./:/var/www/chat
+    - ./docker/logs/supervisord/:/var/log/supervisor
+  command: /usr/bin/supervisord
+  depends_on:
+    - gearman
+
+services:
+  worker:
+    <<: *worker
+    container_name: chat-worker
+
+  chat:
+    <<: *backend
+    image: xphp:latest
+    container_name: chat
+    volumes:
+      - ./:/var/www/chat
+      - ./docker/xphp/conf/fpm/pool.d/www.conf:/etc/php/8.1/fpm/pool.d/www.conf
+
+  nginx:
+    <<: *after-chat
+    image: nginx:latest
+    container_name: chat-nginx
+    ports:
+      - '80:80'
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/logs/nginx/:/var/log/nginx
+      - ./public/build:/resource/build
+      - ./public/media:/resource/media
+
+  gearman:
+    <<: *after-chat
+    image: artefactual/gearmand:latest
+    container_name: chat-gearman
+
+  mercure:
+    <<: *after-chat
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ':80'
+      ALLOW_ANONYMOUS: 1
+      MERCURE_PUBLISHER_JWT_KEY: 'SuPaDuPaSecRetKeyYyYyYy|SuPaDuPaSecRetKeyYyYyYy'
+      MERCURE_SUBSCRIBER_JWT_KEY: 'SuPaDuPaSecRetKeyYyYyYy|SuPaDuPaSecRetKeyYyYyYy'
+    ports:
+      - "3000:80"
+    command: /usr/bin/caddy run -config /etc/caddy/Caddyfile.dev
+
+networks:
+  chat-network:
+    driver: bridge

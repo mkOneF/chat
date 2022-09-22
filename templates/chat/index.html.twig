@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Chat{% endblock %}
+
+{% block body %}
+    <div class="wrapper">
+        <div class="message-container">
+            <div class="message-inner"></div>
+        </div>
+        <div class="input-container">
+            <form url="/message" autocomplete="off">
+                <div class="input-area name-inner">
+                    <input type="text" class="input-text" name="name" placeholder="name">
+                </div>
+                <div class="input-area input-inner">
+                    <input type="text" class="input-text" name="message" placeholder="message">
+                    <button class="send-button" type="submit">send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
