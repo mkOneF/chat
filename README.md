@@ -2,6 +2,7 @@
 
 ### setup
 ```bash
+make && \
 docker-compose up -d && \
 docker exec -it chat bash -c \
   "npm install && composer install && \
