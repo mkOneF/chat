@@ -61,7 +61,7 @@ services:
   mercure:
     <<: *after-chat
     image: dunglas/mercure
-    restart: unless-stopped
+    container_name: chat-mercure
     environment:
       SERVER_NAME: ':80'
       ALLOW_ANONYMOUS: 1
